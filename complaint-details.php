@@ -3,6 +3,33 @@ session_start();
 include('includes/config.php');
 include('includes/checklogin.php');
 check_login();
+if(isset($_POST['submit']))
+{
+// Posted Values
+$cid=$_GET['cid'];
+$cstatus=$_POST['cstatus'];
+$redproblem=$_POST['remark'];
+
+
+
+
+
+// Query for insertion data into database
+$query="insert into  complainthistory(complaintid,compalintStatus,complaintRemark) values(?,?,?)";
+$stmt = $mysqli->prepare($query);
+$rc=$stmt->bind_param('iss',$cid,$cstatus,$redproblem);
+$stmt->execute();
+
+$query1="update complaints set complaintStatus=? where id=?";
+$stmt1 = $mysqli->prepare($query1);
+$rc1=$stmt1->bind_param('si',$cstatus,$cid);
+$stmt1->execute();
+echo "<script>alert('Complaint Updated');</script>";
+echo "<script type='text/javascript'> document.location = 'all-complaints.php'; </script>";
+}
+
+
+
 ?>
 <!doctype html>
 <html lang="en" class="no-js">
@@ -14,7 +41,7 @@ check_login();
 	<meta name="description" content="">
 	<meta name="author" content="">
 	<meta name="theme-color" content="#3e454c">
-	<title>Complaint Details</title>
+	<title>Complaint Details Details</title>
 	<link rel="stylesheet" href="css/font-awesome.min.css">
 	<link rel="stylesheet" href="css/bootstrap.min.css">
 	<link rel="stylesheet" href="css/dataTables.bootstrap.min.css">
@@ -50,11 +77,11 @@ popUpWin = open(URLStr,'popUpWin', 'toolbar=no,location=no,directories=no,status
 				<div class="row" id="print">
 
 <?php	
-$aid=$_SESSION['id'];
+
 $cid=$_GET['cid'];
-$ret="select * from complaints where (id=? and userId=?)";
+$ret="select * from complaints where (id=?)";
 $stmt= $mysqli->prepare($ret) ;
-$stmt->bind_param('is',$cid,$aid);
+$stmt->bind_param('i',$cid);
 $stmt->execute() ;
 $res=$stmt->get_result();
 $cnt=1;
@@ -92,7 +119,7 @@ while($row=$res->fetch_object())
 if($cdoc==''):
 	echo "NA";
 else: ?>
-<a href="comnplaintdoc/<?php echo $cdoc;?>" target="blank">File</a>
+<a href="../comnplaintdoc/<?php echo $cdoc;?>" target="blank">File</a>
 
 <?php	endif;
 ?></td>
@@ -118,14 +145,12 @@ endif;
 
 ?></td>
 </tr>
-
-
-
 <?php
 $cnt=$cnt+1;
 } ?>
 </tbody>
 </table>
+
 <?php $query="select * from complainthistory where (complaintid=?)";
 $stmt1= $mysqli->prepare($query) ;
 $stmt1->bind_param('i',$cid);
@@ -156,12 +181,47 @@ while($row1=$res1->fetch_object())
 <?php } ?>
 </table>
 
+
+
+<?php if($cstatus=='' || $cstatus=='In Process'):?>
+<button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">Take Action</button>
+<?php endif;?>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div>
+</div>
+
+
+<!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Take Action</h4>
+      </div>
+      <form method="post">
+      <div class="modal-body">
+        <p><select name="cstatus" class="form-control" required>
+        	<option value="">Select Status</option>
+        	<option value="In Process">In Process</option>
+        	<option value="Closed">Closed</option>
+        </select></p>
+        <p><textarea name="remark" id="remark" placeholder="Remark or Messgae" rows="6" class="form-control"></textarea></p>
+        <p><input type="submit" name="submit" Value="Submit" class="btn btn-primary"></p>
+      </div>
+  </form>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+
+  </div>
 </div>
 
 	<!-- Loading Scripts -->
